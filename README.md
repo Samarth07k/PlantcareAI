@@ -1,6 +1,9 @@
 # PlantCare AI – Flask Backend
 
-AI-powered plant disease detection using MobileNetV2 transfer learning.
+This project is a Flask backend for a plant disease detection system.
+It uses a MobileNetV2-based deep learning model to identify plant diseases from leaf images and provide treatment suggestions.
+
+The backend handles image uploads, runs predictions using the trained model, and returns recommendations for the detected disease.
 
 ---
 
@@ -8,14 +11,15 @@ AI-powered plant disease detection using MobileNetV2 transfer learning.
 
 ```
 plantcare_backend/
-├── app.py                   # Flask application (routes + API)
-├── model.py                 # ML model loading, prediction, recommendations
-├── train_model.py           # MobileNetV2 training script
+
+├── app.py                   # Main Flask application (routes + API)
+├── model.py                 # Loads the trained model and handles predictions
+├── train_model.py           # Script used to train the MobileNetV2 model
 ├── requirements.txt         # Python dependencies
-├── plant_disease_model.h5   # ← Place your trained model here
+├── plant_disease_model.h5   # Place the trained model file here
 ├── static/
 │   └── uploads/             # Uploaded images are stored here
-└── templates/               # Jinja2 HTML templates
+└── templates/               # HTML templates
     ├── home.html
     ├── about.html
     ├── upload.html
@@ -28,33 +32,54 @@ plantcare_backend/
 
 ## Quick Start
 
-### 1. Install dependencies
+### 1. Install Dependencies
+
+Install the required Python packages:
 
 ```bash
 pip install -r requirements.txt
-# If you have a trained model, also install TensorFlow:
+```
+
+If you are running the model locally, make sure TensorFlow is installed:
+
+```bash
 pip install tensorflow>=2.13.0
 ```
 
-### 2. Add your trained model
+---
 
-Copy your trained model file to the project root:
+### 2. Add the Trained Model
+
+Copy your trained `.h5` model file into the project root directory and name it:
+
+```
+plant_disease_model.h5
+```
+
+Example:
 
 ```bash
 cp /path/to/your/model.h5 plant_disease_model.h5
 ```
 
-> **Note:** Without the model file, the app runs in **demo/stub mode** —  
-> it still works and returns plausible predictions based on the filename hash,  
-> which is useful for frontend testing.
+If the model file is not present, the application will still run in a **demo mode**.
+In this mode, predictions are generated using a simple placeholder method so the frontend can still be tested.
 
-### 3. Run the app
+---
+
+### 3. Run the Application
+
+Start the Flask server:
 
 ```bash
 python app.py
 ```
 
-Visit: [http://localhost:5000](http://localhost:5000)
+Then open your browser and go to:
+
+```
+http://localhost:5000
+```
 
 ---
 
@@ -62,42 +87,73 @@ Visit: [http://localhost:5000](http://localhost:5000)
 
 ### Dataset
 
-Download the **New Plant Diseases Dataset** from Kaggle:  
+The model can be trained using the **New Plant Diseases Dataset** from Kaggle:
+
 https://www.kaggle.com/datasets/vipoooool/new-plant-diseases-dataset
 
-Expected structure:
+After downloading and extracting the dataset, it should have a structure similar to this:
+
 ```
 New_Plant_Diseases_Dataset/
+
     train/
         Apple___Apple_scab/
         Apple___Black_rot/
-        ... (38 classes)
+        ...
+
     valid/
         Apple___Apple_scab/
         ...
 ```
 
-### Train
+---
+
+### Training the Model
+
+Run the training script and specify the dataset directory:
 
 ```bash
 python train_model.py --data_dir /path/to/New_Plant_Diseases_Dataset
 ```
 
-Training runs in two phases:
-1. **Phase 1** – Top layers trained, MobileNetV2 base frozen (10 epochs)
-2. **Phase 2** – Fine-tuning the last 30 layers of MobileNetV2 (10 epochs)
+Training happens in two stages:
 
-The best model is saved automatically as `plant_disease_model.h5`.
+**Stage 1**
+
+* Train the classification layers
+* MobileNetV2 base remains frozen
+
+**Stage 2**
+
+* Fine-tune the last few layers of MobileNetV2
+* Helps improve accuracy on plant disease images
+
+The best performing model will be saved automatically as:
+
+```
+plant_disease_model.h5
+```
 
 ---
 
 ## API Reference
 
-### `POST /api/predict`
+### POST `/api/predict`
 
-Accepts a multipart form with a `file` field (JPG, JPEG, PNG, WebP, max 10MB).
+This endpoint accepts an image file and returns the predicted plant disease.
 
-**Response:**
+**Request**
+
+* Method: POST
+* Content-Type: multipart/form-data
+* Field name: `file`
+* Supported formats: JPG, JPEG, PNG, WebP
+* Maximum file size: 10MB
+
+---
+
+### Example Response
+
 ```json
 {
   "success": true,
@@ -118,31 +174,37 @@ Accepts a multipart form with a `file` field (JPG, JPEG, PNG, WebP, max 10MB).
 
 ---
 
-## Supported Plants & Diseases (38 classes)
+## Supported Plants and Diseases
 
-| Plant | Diseases |
-|-------|----------|
-| Apple | Apple Scab, Black Rot, Cedar Apple Rust, Healthy |
-| Blueberry | Healthy |
-| Cherry | Powdery Mildew, Healthy |
-| Corn | Gray Leaf Spot, Common Rust, Northern Leaf Blight, Healthy |
-| Grape | Black Rot, Esca (Black Measles), Leaf Blight, Healthy |
-| Orange | Huanglongbing (Citrus Greening) |
-| Peach | Bacterial Spot, Healthy |
-| Pepper | Bacterial Spot, Healthy |
-| Potato | Early Blight, Late Blight, Healthy |
-| Raspberry | Healthy |
-| Soybean | Healthy |
-| Squash | Powdery Mildew |
-| Strawberry | Leaf Scorch, Healthy |
-| Tomato | Bacterial Spot, Early Blight, Late Blight, Leaf Mold, Septoria Leaf Spot, Spider Mites, Target Spot, Yellow Leaf Curl Virus, Mosaic Virus, Healthy |
+The model supports **38 different classes** covering multiple plants and their common diseases.
+
+| Plant      | Diseases                                                                                                                                           |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Apple      | Apple Scab, Black Rot, Cedar Apple Rust, Healthy                                                                                                   |
+| Blueberry  | Mummy Berry, Botrytis Blight, Healthy                                                                                                              |
+| Cherry     | Powdery Mildew, Healthy                                                                                                                            |
+| Corn       | Gray Leaf Spot, Common Rust, Northern Leaf Blight, Healthy                                                                                         |
+| Grape      | Black Rot, Esca (Black Measles), Leaf Blight, Healthy                                                                                              |
+| Orange     | Huanglongbing (Citrus Greening)                                                                                                                    |
+| Peach      | Bacterial Spot, Healthy                                                                                                                            |
+| Pepper     | Bacterial Spot, Healthy                                                                                                                            |
+| Potato     | Early Blight, Late Blight, Healthy                                                                                                                 |
+| Raspberry  | Gray Mold, Anthracnose, Cane Blight, Healthy                                                                                                       |
+| Soybean    | Sudden Death Syndrome, Frogeye Leaf Spot, Healthy                                                                                                  |
+| Squash     | Powdery Mildew                                                                                                                                     |
+| Strawberry | Leaf Scorch, Healthy                                                                                                                               |
+| Tomato     | Bacterial Spot, Early Blight, Late Blight, Leaf Mold, Septoria Leaf Spot, Spider Mites, Target Spot, Yellow Leaf Curl Virus, Mosaic Virus, Healthy |
 
 ---
 
-## Team
+## Notes
 
-**Smart Bridge Hyderabad**  
-- Samarth Kulkarni (Team Lead)
-- Isha Raundal
-- Tanishk Shrivastava
-- Payal Wadile
+* The backend is designed to work with a Flask frontend using HTML templates.
+* Uploaded images are stored temporarily in the `static/uploads` directory.
+* Predictions are returned through both the web interface and the API endpoint.
+
+This project can be extended by:
+
+* Adding more plant datasets
+* Improving the model architecture
+* Deploying the API using Docker or cloud services.
